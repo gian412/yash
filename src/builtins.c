@@ -22,6 +22,7 @@ char *builtin_str[] = {
     "cd",
     "pwd",
     "help",
+    "clear",
     "exit"
 };
 
@@ -31,6 +32,7 @@ int (*builtin_func[]) (char **) = {
     &yash_cd,
     &yash_pwd,
     &yash_help,
+    &yash_clear,
     &yash_exit
 };
 
@@ -115,6 +117,15 @@ int yash_help(char **args) {
     }
 
     printf("%s%s\n", NORMAL_COLOR, "Use the man command for information on other programs.");
+    return 1;
+}
+
+int yash_clear(char **args) {
+    if (args[1] != NULL) {
+        fprintf(stderr, "%s%s\n", RED, "Too many arguments for \"pwd\"");
+    } else {
+        printf("\e[1;1H\e[2J");
+    }
     return 1;
 }
 
