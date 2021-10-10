@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <dirent.h>
+#include "builtins.h"
 
 // Global constants
 #define EXIT_SUCCESS 0
@@ -27,35 +29,6 @@ char *yash_readLine(void);
 char **yash_splitLine(char * line);
 int yash_execute();
 int yash_launch(char **args);
-
-// Function declaration for builtin shell commands
-int yash_ls(char **args);
-int yash_cd(char **args);
-int yash_pwd(char **args);
-int yash_help(char **args);
-int yash_exit(char **args);
-
-// List of builtin commands
-char *builtin_str[] = {
-    "ls",
-    "cd",
-    "pwd",
-    "help",
-    "exit"
-};
-
-// List of builtin functions
-int (*builtin_func[]) (char **) = {
-    &yash_ls,
-    &yash_cd,
-    &yash_pwd,
-    &yash_help,
-    &yash_exit
-};
-
-int yash_num_builtins() {
-    return sizeof(builtin_str) / sizeof(char *);
-}
 
 // Main
 int main(int argc, char **argv) {
@@ -189,75 +162,9 @@ int yash_execute(char **args) {
         return 1;
     }
 
-    for (i = 0; i < yash_num_builtins(); i++) {
-        if (strcmp(args[0], builtin_str[i]) == 0) {
-            return (*builtin_func[i])(args);
-        }
+    if (is_yash_builtin(args[0])) {
+        return launch_yash_builtin(args);
     }
-
     return yash_launch(args);
-}
-
-// Builtin function implementation
-int yash_ls(char **args) {
-    DIR *d;
-    if (args[1] != NULL) {
-        d = opendir(args[1]);
-    } else {
-        d = opendir(".");
-    }
-    struct dirent *dir;
-    if (d==NULL) return 1;
-    while ((dir = readdir(d)) != NULL) {
-        if (dir->d_type != DT_DIR) {
-            printf("%s%s\n", BLUE, dir->d_name);
-        }
-        else {
-            if (dir->d_type == DT_DIR && strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
-                printf("%s%s\n", GREEN, dir->d_name);
-            }
-        }
-    }
-    closedir(d);
-    return 1;
-}
-
-int yash_cd(char **args) {
-    if (args[1] == NULL) {
-        fprintf(stderr, "%s%s\n", RED, "yash: expected argument to \"cd\"");
-    } else {
-        if (chdir(args[1]) != 0) {
-            perror("yash");
-        }
-    }
-    return 1;
-}
-
-int yash_pwd(char **args) {
-    char s[100];
-    if (args[1] != NULL) {
-        fprintf(stderr, "%s%s\n", RED, "Too many arguments for \"pwd\"");
-    } else {
-        printf("%s%s\n", NORMAL_COLOR, getcwd(s, 100));
-    }
-    return 1;
-}
-
-int yash_help(char **args) {
-    int i;
-    printf("%s%s\n", CYAN, "Gianluca Regis' YASH");
-    printf("%s%s\n", NORMAL_COLOR, "Type program names and arguments, and hit enter.");
-    printf("%s%s\n", NORMAL_COLOR, "The following are built in:");
-
-    for (i = 0; i < yash_num_builtins(); i++) {
-        printf("  %s%s\n", BLUE,  builtin_str[i]);
-    }
-
-    printf("%s%s\n", NORMAL_COLOR, "Use the man command for information on other programs.");
-    return 1;
-}
-
-int yash_exit(char **args) {
-    return 0;
 }
 
