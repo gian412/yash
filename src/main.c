@@ -4,11 +4,17 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <dirent.h>
 
 // Global constants
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
-//
+
+// Colors
+#define NORMAL_COLOR  "\x1B[0m"
+#define GREEN  "\x1B[32m"
+#define BLUE  "\x1B[34m"
+
 // Function declaration for runtime commands
 void yash_loop(void);
 char *yash_readLine(void);
@@ -17,12 +23,14 @@ int yash_execute();
 int yash_launch(char **args);
 
 // Function declaration for builtin shell commands
+int yash_ls(char **args);
 int yash_cd(char **args);
 int yash_help(char **args);
 int yash_exit(char **args);
 
 // List of builtin commands
 char *builtin_str[] = {
+    "ls",
     "cd",
     "help",
     "exit"
@@ -30,6 +38,7 @@ char *builtin_str[] = {
 
 // List of builtin functions
 int (*builtin_func[]) (char **) = {
+    &yash_ls,
     &yash_cd,
     &yash_help,
     &yash_exit
@@ -181,6 +190,29 @@ int yash_execute(char **args) {
 }
 
 // Builtin function implementation
+int yash_ls(char **args) {
+    DIR *d;
+    if (args[1] != NULL) {
+        d = opendir(args[1]);
+    } else {
+        d = opendir(".");
+    }
+    struct dirent *dir;
+    if (d==NULL) return 1;
+    while ((dir = readdir(d)) != NULL) {
+        if (dir->d_type != DT_DIR) {
+            printf("%s%s\n", BLUE, dir->d_name);
+        }
+        else {
+            if (dir->d_type == DT_DIR && strcmp(dir->d_name, ".") != 0 && strcmp(dir->d_name, "..") != 0) {
+                printf("%s%s\n", GREEN, dir->d_name);
+            }
+        }
+    }
+    closedir(d);
+    return 1;
+}
+
 int yash_cd(char **args) {
     if (args[1] == NULL) {
         fprintf(stderr, "yash: expected argument to \"cd\"\n");
