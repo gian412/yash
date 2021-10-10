@@ -25,6 +25,7 @@ int yash_launch(char **args);
 // Function declaration for builtin shell commands
 int yash_ls(char **args);
 int yash_cd(char **args);
+int yash_pwd(char **args);
 int yash_help(char **args);
 int yash_exit(char **args);
 
@@ -32,6 +33,7 @@ int yash_exit(char **args);
 char *builtin_str[] = {
     "ls",
     "cd",
+    "pwd",
     "help",
     "exit"
 };
@@ -40,6 +42,7 @@ char *builtin_str[] = {
 int (*builtin_func[]) (char **) = {
     &yash_ls,
     &yash_cd,
+    &yash_pwd,
     &yash_help,
     &yash_exit
 };
@@ -221,6 +224,12 @@ int yash_cd(char **args) {
             perror("yash");
         }
     }
+    return 1;
+}
+
+int yash_pwd(char **args) {
+    char s[100];
+    printf("%s%s\n", NORMAL_COLOR, getcwd(s, 100));
     return 1;
 }
 
